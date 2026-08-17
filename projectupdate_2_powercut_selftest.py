@@ -25,12 +25,15 @@ def check(name, cond, extra=""):
     print(("FAIL " if not cond else "ok   ") + name + (f"  {extra}" if extra else ""))
 
 
+body = "def save_answers" + ANSWER.split("def save_answers")[1].split("done = {r[")[0]
+
+
 def fresh():
-    """Load just the save/load helpers, pointed at a temp file."""
-    body = ANSWER.split("done = {r[")[0].split("def save_answers")[1]
-    body = "def save_answers" + body
+    """Load just the save/load helpers, pointed at a temp file. glob is stubbed to find
+    nothing so these cases exercise the local file and its backup only."""
     tmpdir = tempfile.mkdtemp()
-    ns = {"os": os, "json": json, "path": os.path.join(tmpdir, "preds.json")}
+    ns = {"os": os, "json": json, "path": os.path.join(tmpdir, "preds.json"),
+          "glob": type("G", (), {"glob": staticmethod(lambda *a, **k: [])})}
     exec(body, ns)
     return ns
 
@@ -96,6 +99,69 @@ for n in range(1, 40):
         break
 check("every save leaves at least one readable file", worst is None,
       "" if worst is None else f"failed at n={worst}")
+
+
+# ---- resuming from an attached Kaggle dataset (when Persistence is unavailable) ----
+def setup(local=None, bak=None, dataset=None, dataset_dir="kaggle_input/mydata"):
+    """Fake a session: optional local file, backup, and an 'attached dataset' copy.
+    /kaggle/input is faked by rewriting the glob pattern into a temp tree."""
+    import glob as real_glob
+    d = tempfile.mkdtemp()
+    p = os.path.join(d, "results", "preds_x_n1000_seed42.json")
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    if local is not None:
+        json.dump(local, open(p, "w"))
+    if bak is not None:
+        json.dump(bak, open(p + ".bak", "w"))
+    if dataset is not None:
+        ds = os.path.join(d, dataset_dir)
+        os.makedirs(ds, exist_ok=True)
+        json.dump(dataset, open(os.path.join(ds, os.path.basename(p)), "w"))
+
+    class FakeGlob:
+        @staticmethod
+        def glob(pat, recursive=False):
+            return real_glob.glob(
+                pat.replace("/kaggle/input", os.path.join(d, "kaggle_input")),
+                recursive=recursive)
+
+    ns = {"os": os, "json": json, "path": p, "glob": FakeGlob}
+    exec(body, ns)
+    return ns
+
+
+ns = setup(local=recs(300))
+check("local file alone", len(ns["load_answers"]()) == 300)
+
+ns = setup(dataset=recs(700))
+with redirect_stdout(io.StringIO()) as out:
+    got = ns["load_answers"]()
+check("resumes from an attached dataset with no local file", len(got) == 700, f"{len(got)}")
+check("says where the answers came from", "attached dataset" in out.getvalue())
+
+ns = setup(local=recs(850), dataset=recs(700))
+with redirect_stdout(io.StringIO()):
+    got = ns["load_answers"]()
+check("local and dataset combine without duplicates", len(got) == 850, f"{len(got)}")
+
+ns = setup(local=recs(100), dataset=recs(700))
+with redirect_stdout(io.StringIO()):
+    got = ns["load_answers"]()
+check("dataset fills in what the local file lacks", len(got) == 700, f"{len(got)}")
+
+ns = setup(dataset=recs(700))
+open(ns["path"], "w").write('[{"question":')
+with redirect_stdout(io.StringIO()):
+    got = ns["load_answers"]()
+check("corrupt local file falls through to the dataset", len(got) == 700, f"{len(got)}")
+
+ns = setup(dataset=recs(500), dataset_dir="kaggle_input/my-ds/results")
+with redirect_stdout(io.StringIO()):
+    got = ns["load_answers"]()
+check("finds the file in a nested dataset folder", len(got) == 500, f"{len(got)}")
+
+ns = setup()
+check("nothing to resume from is not an error", ns["load_answers"]() == [])
 
 print("\nFAILED" if fails else "\nall checks passed")
 sys.exit(1 if fails else 0)
