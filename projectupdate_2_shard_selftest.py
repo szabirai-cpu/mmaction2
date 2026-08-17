@@ -8,8 +8,17 @@ from collections import Counter
 from contextlib import redirect_stdout
 
 nb = json.load(open("projectupdate_2.ipynb", encoding="utf-8"))
-src = {i: "".join(c["source"]) for i, c in enumerate(nb["cells"])}
-CONFIG, ANSWER, MERGE = src[1], src[10], src[13]
+def cell(marker):
+    """Locate a cell by its header comment rather than its index -- inserting a cell
+    must not silently make these tests exercise the wrong code."""
+    hits = [s for s in ("".join(c["source"]) for c in nb["cells"]) if marker in s]
+    assert len(hits) == 1, f"{marker!r} matched {len(hits)} cells"
+    return hits[0]
+
+
+CONFIG = cell("= CONFIG =")
+ANSWER = cell("ANSWER THE QUESTIONS")
+MERGE = cell("MERGE THE SHARDS")
 
 fails = 0
 

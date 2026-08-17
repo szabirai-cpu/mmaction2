@@ -6,7 +6,15 @@ import io, json, os, sys, tempfile
 from contextlib import redirect_stdout
 
 nb = json.load(open("projectupdate_2.ipynb", encoding="utf-8"))
-ANSWER = "".join(nb["cells"][10]["source"])
+def cell(marker):
+    """Locate a cell by its header comment rather than its index -- inserting a cell
+    must not silently make these tests exercise the wrong code."""
+    hits = [s for s in ("".join(c["source"]) for c in nb["cells"]) if marker in s]
+    assert len(hits) == 1, f"{marker!r} matched {len(hits)} cells"
+    return hits[0]
+
+
+ANSWER = cell("ANSWER THE QUESTIONS")
 
 fails = 0
 

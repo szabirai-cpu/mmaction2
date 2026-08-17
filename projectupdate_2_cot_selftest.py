@@ -33,7 +33,16 @@ np.array = lambda x, dtype=None: x
 sys.modules["numpy"] = np
 
 nb = json.load(open("projectupdate_2.ipynb", encoding="utf-8"))
-src = {i: "".join(c["source"]) for i, c in enumerate(nb["cells"])}
+def cell(marker):
+    """Locate a cell by its header comment rather than its index -- inserting a cell
+    must not silently make these tests exercise the wrong code."""
+    hits = [s for s in ("".join(c["source"]) for c in nb["cells"]) if marker in s]
+    assert len(hits) == 1, f"{marker!r} matched {len(hits)} cells"
+    return hits[0]
+
+
+PROMPTS = cell("PROMPTS: PAPER BASELINE")
+RETRIEVAL = cell("RETRIEVAL + GENERATION")
 
 G = {"__name__": "nbtest", "torch": torch, "np": np}
 
@@ -43,7 +52,7 @@ G.update(USE_COT=True, CONCISE_FINAL_ANSWER=True, TOP_K=6,
          MAX_NEW_TOKENS=1024, COT_RETRY_NEW_TOKENS=1536,
          SUPPORTS_SYSTEM_ROLE=True)
 
-exec(src[8], G)                      # prompts + split_cot
+exec(PROMPTS, G)                      # prompts + split_cot
 split_cot = G["split_cot"]
 
 FINAL = "الإجابة النهائية:"
@@ -180,7 +189,7 @@ class FakeStr(str):
 
 
 G["tokenizer"] = FakeTok()
-gen_src = src[9].split("direct_questions = ")[0]      # drop the live smoke test
+gen_src = RETRIEVAL.split("direct_questions = ")[0]      # drop the live smoke test
 exec(gen_src, G)
 
 chunk = {"chunk_text": "س" * 400, "source": "x", "surah_name": "y",
