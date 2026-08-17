@@ -52,7 +52,7 @@ def slice_for(shard):
     ns = dict(G)
     ns.update(direct_questions=POOL, RESULTS_DIR=tempfile.mkdtemp(),
               json=json, os=os, random=random)
-    body = ANSWER.split("done = {}")[0]
+    body = ANSWER.split("def save_answers")[0]   # sampling + slicing only
     body = body.replace("from tqdm.auto import tqdm", "")
     with redirect_stdout(io.StringIO()):
         exec(body, ns)
