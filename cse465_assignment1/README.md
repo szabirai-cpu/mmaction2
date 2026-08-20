@@ -7,8 +7,9 @@ questions are left for the report.
 
 ## Files
 
-| Experiment | Script | Kaggle notebook |
+| Step | Script | Kaggle notebook |
 |---|---|---|
+| 0. Download + cache the data (run once) | `prepare_data.py` | `kaggle_notebooks/prepare_data_kaggle.ipynb` |
 | 1. Baseline feedforward network | `exp1_baseline.py` | `kaggle_notebooks/exp1_baseline_kaggle.ipynb` |
 | 2. Number of neurons (256 / 512 / 1024) | `exp2_neurons.py` | `kaggle_notebooks/exp2_neurons_kaggle.ipynb` |
 | 3. Number of hidden layers (1 / 2 / 3) | `exp3_layers.py` | `kaggle_notebooks/exp3_layers_kaggle.ipynb` |
@@ -27,6 +28,28 @@ questions are left for the report.
 4. Run all. Plots appear inline and are also saved under `/kaggle/working/results/`, so they
    can be downloaded from the **Output** tab and dropped straight into the report.
 
+## The data is downloaded only once
+
+CIFAR-10 is downloaded, subset, normalised, flattened and split **one time**. The result is
+cached as `data/cifar10_2class_1000.npz` (about 7 MB) and every experiment reloads that file
+instead of rebuilding it:
+
+```
+Loaded cached data from data/cifar10_2class_1000.npz
+```
+
+So a crashed run, a typo, or the next experiment costs no download time at all. `prepare_data.py`
+builds the cache on its own if you want that as a separate first step, but it is optional -
+whichever experiment runs first creates it.
+
+All experiments share the same cached split, which is also what makes their accuracies
+comparable. Delete `data/cifar10_2class_1000.npz` if you change `CLASSES`, `N_TRAIN_SAMPLES`
+or `N_TEST_SAMPLES`, otherwise the old subset keeps being reused.
+
+**On Kaggle** the cache goes to `/kaggle/working/data/`. That survives cell re-runs and session
+restarts of the same notebook. To reuse it in a *different* notebook, click **Save Version**,
+then add this notebook's output as a data source in the other notebook.
+
 CPU is enough - each experiment takes a couple of minutes because only 1000 training
 samples are used.
 
@@ -34,6 +57,7 @@ samples are used.
 
 ```bash
 pip install tensorflow scikit-learn matplotlib
+python prepare_data.py      # optional: downloads and caches the data once
 python exp1_baseline.py     # then exp2 ... exp7
 ```
 

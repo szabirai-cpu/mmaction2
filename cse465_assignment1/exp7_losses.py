@@ -44,6 +44,10 @@ LEARNING_RATE = 0.001       # best optimizer from Experiment 6 -> Adam
 
 NUM_CLASSES = len(CLASSES)
 RESULTS_DIR = "results"
+DATA_DIR = "data"
+# The prepared subset is cached here, so CIFAR-10 is downloaded and processed
+# only once - every later run (or re-run after an error) loads this file.
+CACHE_PATH = os.path.join(DATA_DIR, "cifar10_2class_1000.npz")
 
 # name -> (loss object, one_hot_labels?)
 def loss_functions():
@@ -62,7 +66,7 @@ def loss_functions():
 # ----------------------------------------------------------------------
 # Data
 # ----------------------------------------------------------------------
-def load_data():
+def build_data():
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
     x_train = x_train.astype("float32") / 255.0
@@ -86,6 +90,29 @@ def load_data():
     x_train, x_val, y_train, y_val = train_test_split(
         x_pool, y_pool, test_size=0.2, random_state=42, stratify=y_pool
     )
+    return (x_train, y_train), (x_val, y_val), (x_test, y_test)
+
+
+def load_data():
+    """Return the cached subset, or build it once and cache it."""
+    if os.path.exists(CACHE_PATH):
+        d = np.load(CACHE_PATH)
+        print(f"Loaded cached data from {CACHE_PATH}")
+        return (
+            (d["x_train"], d["y_train"]),
+            (d["x_val"], d["y_val"]),
+            (d["x_test"], d["y_test"]),
+        )
+
+    (x_train, y_train), (x_val, y_val), (x_test, y_test) = build_data()
+    os.makedirs(DATA_DIR, exist_ok=True)
+    np.savez_compressed(
+        CACHE_PATH,
+        x_train=x_train, y_train=y_train,
+        x_val=x_val, y_val=y_val,
+        x_test=x_test, y_test=y_test,
+    )
+    print(f"Prepared data cached at {CACHE_PATH}")
     return (x_train, y_train), (x_val, y_val), (x_test, y_test)
 
 
