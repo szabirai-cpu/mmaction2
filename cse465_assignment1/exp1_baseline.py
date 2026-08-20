@@ -16,8 +16,6 @@ Outputs:
 
 import os
 
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -119,6 +117,7 @@ def plot_history(history, tag):
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(f"{RESULTS_DIR}/{tag}_accuracy.png", dpi=150)
+    plt.show()
     plt.close()
 
     plt.figure(figsize=(6, 4))
@@ -131,6 +130,7 @@ def plot_history(history, tag):
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(f"{RESULTS_DIR}/{tag}_loss.png", dpi=150)
+    plt.show()
     plt.close()
 
 

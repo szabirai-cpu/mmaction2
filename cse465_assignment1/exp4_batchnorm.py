@@ -16,8 +16,6 @@ Outputs:
 
 import os
 
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -123,6 +121,7 @@ def plot_curves(histories):
     fig.suptitle("Experiment 4 - Effect of Batch Normalization")
     fig.tight_layout()
     fig.savefig(f"{RESULTS_DIR}/exp4_curves.png", dpi=150)
+    plt.show()
     plt.close(fig)
 
 
@@ -142,6 +141,7 @@ def plot_bar(results):
     plt.grid(axis="y", alpha=0.3)
     plt.tight_layout()
     plt.savefig(f"{RESULTS_DIR}/exp4_test_accuracy_bar.png", dpi=150)
+    plt.show()
     plt.close()
 
 
