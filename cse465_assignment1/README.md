@@ -5,6 +5,17 @@ imports between them, so any one file can be run (or pasted into a notebook) on 
 The code only produces numbers, tables and plots; the written answers to the discussion
 questions are left for the report.
 
+## One notebook with everything
+
+`CSE465_Assignment_All_Experiments.ipynb` contains all seven experiments in a single
+Kaggle notebook: a Setup cell, one cell per experiment, and a final summary cell that
+prints every model in one table and saves `results/all_experiments_summary.csv`.
+Import it into Kaggle, turn Internet ON, and Run All (about 3-5 minutes on CPU).
+Each experiment cell can also be re-run on its own after Setup.
+
+The per-experiment files below are the same code split up, in case a single experiment
+is easier to work with.
+
 ## Files
 
 | Step | Script | Kaggle notebook |
