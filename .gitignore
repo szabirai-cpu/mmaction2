@@ -148,5 +148,6 @@ mmaction/tools/*
 # unignore ipython notebook files in demo
 !demo/*.ipynb
 !projects/ontologyrag_q_kaggle/*.ipynb
+!projects/rag_consulting_template/*.ipynb
 !projects/stad_tutorial/*.ipynb
 mmaction/.mim
